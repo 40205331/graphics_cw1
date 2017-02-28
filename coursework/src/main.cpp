@@ -11,9 +11,9 @@ effect skybox_eff;
 mesh skybox_mesh;
 free_camera cam;
 map<string, mesh> meshes;
+map<string, texture> textures;
 
 
-texture tex;
 
 cubemap cube_map;
 
@@ -44,13 +44,15 @@ bool load_content() {
 
 	//Models:
 	meshes["plane"] = mesh(geometry_builder::create_plane(50.0, 50.0));
-	meshes["plane"].get_transform().position = vec3(0.0f, -5.0f, 0.0f);
-	
+	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
+	meshes["dragon"] = mesh(geometry("models/dragon.obj"));
+	meshes["dragon"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
+	meshes["dragon"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
 	//Temp
 	
 
-	tex = texture("textures/check_1.png");
-
+	textures["plane"] = texture("textures/check_1.png");
+	textures["dragon"] = texture("textures/dragon.jpg");
 	// Load in shaders
 	eff.add_shader("shaders/simple_texture.frag", GL_FRAGMENT_SHADER);
 	eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
@@ -58,7 +60,7 @@ bool load_content() {
 	eff.build();
 
 	// Set camera properties
-	cam.set_position(vec3(0.0f, 0.0f, 10.0f));
+	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
 	cam.set_target(vec3(0.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 	return true;
@@ -141,16 +143,15 @@ bool render() {
 		auto m = e.second;
 		renderer::bind(eff);
 
-		M = mat4(1.0f);
+		//M = mat4(1.0f);
+		M = m.get_transform().get_transform_matrix();
 		V = cam.get_view();
 		P = cam.get_projection();
 		MVP = P * V * M;
 
 		glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
-
-		renderer::bind(tex, 0);
+		renderer::bind(textures[e.first], 0);
 		glUniform1i(eff.get_uniform_location("tex"), 0);
-		
 		renderer::render(m);
 		}
 
