@@ -8,10 +8,14 @@ using namespace glm;
 
 effect eff;
 effect skybox_eff;
+effect point_eff;
 mesh skybox_mesh;
 free_camera cam;
+target_camera cam2;
 map<string, mesh> meshes;
 map<string, texture> textures;
+bool cams = true;
+point_light p_light;
 
 
 
@@ -28,7 +32,7 @@ bool initialise() {
 
 bool load_content() {
 	//skybox:
-	skybox_mesh = mesh(geometry_builder::create_box(vec3(1.0f, 1.0f, 1.0f)));
+	skybox_mesh = mesh(geometry_builder::create_box(vec3(10.0f, 10.0f, 10.0f)));
 	skybox_mesh.get_transform().scale = vec3(100.0f, 100.0f, 100.0f);
 	array<string, 6> filenames = { "textures/hell_ft.tga", "textures/hell_bk.tga", "textures/hell_up.tga",
 		"textures/hell_dn.tga", "textures/hell_rt.tga", "textures/hell_lf.tga" };
@@ -40,24 +44,38 @@ bool load_content() {
 	// Build Effect
 	skybox_eff.build();
 
+	// Load point light
+	p_light.set_position(vec3(20.0f, 10.0f, 0.0f));
+	p_light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	p_light.set_range(200.0f);
+
+	point_eff.add_shader("shaders/point.frag", GL_FRAGMENT_SHADER);
+	point_eff.add_shader("shaders/point.vert", GL_VERTEX_SHADER);
+	point_eff.build();
+
+	// Target camera properties
+	cam2.set_position(vec3(0.0f, 10.0f, 0.0f));
+	cam2.set_target(vec3(10.0f, 10.0f, 10.0f));
+	cam2.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
+
 
 
 	//Models:
 	meshes["plane"] = mesh(geometry_builder::create_plane(50.0, 50.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
-	meshes["dragon"] = mesh(geometry("models/dragon.obj"));
-	meshes["dragon"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
-	meshes["dragon"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
+	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
+	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
+	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
 	//Temp
 	
 
 	textures["plane"] = texture("textures/check_1.png");
-	textures["dragon"] = texture("textures/dragon.jpg");
+	textures["alduin"] = texture("textures/alduin.jpg");
 	// Load in shaders
-	eff.add_shader("shaders/simple_texture.frag", GL_FRAGMENT_SHADER);
-	eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
+	//eff.add_shader("shaders/simple_texture.frag", GL_FRAGMENT_SHADER);
+	//eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
 	// Build effect
-	eff.build();
+	//eff.build();
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
@@ -91,18 +109,27 @@ bool update(float delta_time) {
 	// Use keyboard to move the camera - WSAD
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
 		cam.move(vec3(0.0f, 0.0f, 0.5f));
+		cams = true;
 	}
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A)) {
 		cam.move(vec3(-0.5f, 0.0f, 0.0f));
+		cams = true;
 	}
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S)) {
 		cam.move(vec3(0.0f, 0.0f, -0.5));
+		cams = true;
 	}
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
 		cam.move(vec3(0.5f, 0.0f, 0.0f));
+		cams = true;
+	}
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_K)) {
+		cam2.set_position(vec3(0.0f, 50.0f, 0.0f));
+		cams = false;
 	}
 	// Update the camera
 	cam.update(delta_time);
+	cam2.update(delta_time);
 	// Update cursor pos
 	cursor_x = current_x;
 	cursor_y = current_y;
@@ -141,17 +168,32 @@ bool render() {
 	//Render Objects
 	for (auto &e : meshes) {
 		auto m = e.second;
-		renderer::bind(eff);
+		renderer::bind(point_eff);
 
 		//M = mat4(1.0f);
 		M = m.get_transform().get_transform_matrix();
-		V = cam.get_view();
-		P = cam.get_projection();
+		if (cams == true)
+		{
+			V = cam.get_view();
+			P = cam.get_projection();
+		}
+		else
+		{
+			V = cam2.get_view();
+			P = cam2.get_projection();
+		}
 		MVP = P * V * M;
-
-		glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+		// set MVP uniform
+		glUniformMatrix4fv(point_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+		// set light uniform
+		glUniformMatrix4fv(point_eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+		glUniformMatrix3fv(point_eff.get_uniform_location("N"), 1, GL_FALSE, value_ptr(m.get_transform().get_normal_matrix()));
+		renderer::bind(m.get_material(), "mat");
+		renderer::bind(p_light, "point");
 		renderer::bind(textures[e.first], 0);
-		glUniform1i(eff.get_uniform_location("tex"), 0);
+		glUniform1i(point_eff.get_uniform_location("tex"), 0);
+		glUniform3fv(point_eff.get_uniform_location("position"), 1, value_ptr(cam.get_position()));
+		// render the mesh
 		renderer::render(m);
 		}
 
