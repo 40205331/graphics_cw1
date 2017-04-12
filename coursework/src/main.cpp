@@ -75,7 +75,7 @@ bool load_content() {
 	//Models:
 	meshes["plane"] = mesh(geometry_builder::create_plane(50.0, 50.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
-	meshes["alduin"] = mesh(geometry("Models/alduin.obj"));
+	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
 	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
 	//Temp
