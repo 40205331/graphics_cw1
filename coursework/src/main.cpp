@@ -9,7 +9,8 @@ using namespace glm;
 effect eff;
 effect skybox_eff;
 effect point_eff;
-effect direction_eff;
+
+effect grey_eff;
 mesh skybox_mesh;
 free_camera cam;
 target_camera cam2;
@@ -19,9 +20,11 @@ bool cams = true;
 point_light p_light;
 static float light_off;
 static float light_on;
-directional_light d_light;
+frame_buffer frame;
+texture tex;
+geometry screen_quad;
 
-
+map < string, int > listofeffects;
 
 cubemap cube_map;
       
@@ -35,6 +38,14 @@ bool initialise() {
 }
 
 bool load_content() {
+	frame = frame_buffer(renderer::get_screen_width(), renderer::get_screen_height());
+	// create screen quad
+	vector<vec3> positions{ vec3(-1.0f, -1.0f, 0.0f), vec3(1.0f, -1.0f, 0.0f), vec3(-1.0f, 1.0f, 0.0f), vec3(1.0f, 1.0f, 0.0f) };
+	vector<vec2> tex_coords{ vec2(0.0f, 0.0f), vec2(1.0f, 0.0f), vec2(0.0f, 1.0f), vec2(1.0f, 1.0f) };
+	screen_quad.add_buffer(positions, BUFFER_INDEXES::POSITION_BUFFER);
+	screen_quad.add_buffer(tex_coords, BUFFER_INDEXES::TEXTURE_COORDS_0);
+	screen_quad.set_type(GL_TRIANGLE_STRIP);
+
 	//skybox:
 	skybox_mesh = mesh(geometry_builder::create_box(vec3(10.0f, 10.0f, 10.0f)));
 	skybox_mesh.get_transform().scale = vec3(100.0f, 100.0f, 100.0f);
@@ -48,14 +59,10 @@ bool load_content() {
 	// Build Effect
 	skybox_eff.build();
 
-	// Load direction light
-	d_light.set_ambient_intensity(vec4(0.1f, 0.1f, 0.1f, 1.0f));
-	d_light.set_light_colour(vec4(0.1f, 0.2f, 0.2f, 1.0f));
-	d_light.set_direction(normalize(vec3(1.0f, 1.0f, -1.0f)));
-
-	//direction_eff.add_shader("shaders/direction.frag", GL_FRAGMENT_SHADER);
-	//direction_eff.build();
-
+	// greyscale shaders
+	grey_eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
+	grey_eff.add_shader("shaders/greyscale.frag", GL_FRAGMENT_SHADER);
+	grey_eff.build();
 	// Load point light
 	p_light.set_position(vec3(20.0f, 10.0f, 0.0f));
 	p_light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -78,22 +85,34 @@ bool load_content() {
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
 	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
-	//Temp
 	
-
+	//Textures:
 	textures["plane"] = texture("textures/check_1.png");
 	textures["alduin"] = texture("textures/alduin.jpg");
-	// Load in shaders
-	//eff.add_shader("shaders/simple_texture.frag", GL_FRAGMENT_SHADER);
-	//eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
-	// Build effect
-	//eff.build();
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
 	cam.set_target(vec3(0.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 	return true;
+}
+
+void redscale()
+{
+	renderer::set_render_target(frame);
+	renderer::set_render_target();
+	//Bind tex effect
+	renderer::bind(grey_eff);
+	// MVP is now the identity matrix
+	auto MVP = mat4(1.0f);
+	// Set MVP matrix uniform
+	glUniformMatrix4fv(grey_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+	// Bind texture from frame buffer
+	renderer::bind(frame.get_frame(), 1);
+	// Set the tex uniform
+	glUniform1i(grey_eff.get_uniform_location("tex"), 1);
+	// render the screen
+	renderer::render(screen_quad);
 }
 
 
@@ -119,37 +138,69 @@ bool update(float delta_time) {
 
 	cam.rotate(delta_x, delta_y);
 	// Use keyboard to move the camera - WSAD
+	// set W to move forward
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
 		cam.move(vec3(0.0f, 0.0f, 0.5f));
 		cams = true;
 	}
+	// set A to move backwards
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A)) {
 		cam.move(vec3(-0.5f, 0.0f, 0.0f));
 		cams = true;
 	}
+	// set S to move left
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S)) {
 		cam.move(vec3(0.0f, 0.0f, -0.5));
 		cams = true;
 	}
+	// set D to move right
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
 		cam.move(vec3(0.5f, 0.0f, 0.0f));
 		cams = true;
 	}
+
+	// switch to target camera
+	// set K to turn on target camera
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_K)) {
 		cam2.set_position(vec3(0.0f, 50.0f, 0.0f));
 		cams = false;
 	}
+
+	// activate lights 
+	// set L to turn spot light off
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_L)) {
 		light_off = 0.0f;
 			p_light.set_range(light_off);
 	}
+	// set O to turn spot light on
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_O)) {
 		light_on = 100.0f;
 			p_light.set_range(light_on);
 	}
+
+	// activate wireframe
+	// turn wireframe on 
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_F)) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	//turn wire frame off
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_J)) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_G)) {
+		listofeffects["grey_eff"] = 0;
+	}
+	//turn wire frame off
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_T)) {
+		listofeffects["grey_eff"] = 1;
+	}
+
 	// Update the camera
 	cam.update(delta_time);
 	cam2.update(delta_time);
+
 	// Update cursor pos
 	cursor_x = current_x;
 	cursor_y = current_y;
@@ -162,6 +213,8 @@ bool update(float delta_time) {
 }
 
 bool render() {
+	renderer::clear();
+
 	// Render Skybox
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
@@ -169,22 +222,22 @@ bool render() {
 
 	renderer::bind(skybox_eff);
 
-	mat4 M = skybox_mesh.get_transform().get_transform_matrix();
-	auto V = cam.get_view();
-	auto P = cam.get_projection();
+	mat4 MB = skybox_mesh.get_transform().get_transform_matrix();
+	auto VB = cam.get_view();
+	auto PB = cam.get_projection();
 	
 	if (cams == true)
 	{
-		V = cam.get_view();
-		P = cam.get_projection();
+		VB = cam.get_view();
+		PB = cam.get_projection();
 	}
 	else
 	{
-		V = cam2.get_view();
-		P = cam2.get_projection();
+		VB = cam2.get_view();
+		PB = cam2.get_projection();
 	}
-	auto MVP = P * V * M;
-	glUniformMatrix4fv(skybox_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+	auto MBVBPB = PB * VB * MB;
+	glUniformMatrix4fv(skybox_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MBVBPB));
 
 	renderer::bind(cube_map, 0);
 	glUniform1i(skybox_eff.get_uniform_location("cubemap"), 0);
@@ -201,23 +254,28 @@ bool render() {
 		renderer::bind(point_eff);
 
 		//M = mat4(1.0f);
-		M = m.get_transform().get_transform_matrix();
+		MB = m.get_transform().get_transform_matrix();
 		
-		MVP = P * V * M;
+		MBVBPB = PB * VB * MB;
 		// set MVP uniform
-		glUniformMatrix4fv(point_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+		glUniformMatrix4fv(point_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MBVBPB));
 		// set light uniform
-		glUniformMatrix4fv(point_eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+		glUniformMatrix4fv(point_eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(MB));
 		glUniformMatrix3fv(point_eff.get_uniform_location("N"), 1, GL_FALSE, value_ptr(m.get_transform().get_normal_matrix()));
 		renderer::bind(m.get_material(), "mat");
 		renderer::bind(p_light, "point");
-		renderer::bind(d_light, "directional");
+		
 		renderer::bind(textures[e.first], 0);
 		glUniform1i(point_eff.get_uniform_location("tex"), 0);
 		glUniform3fv(point_eff.get_uniform_location("position"), 1, value_ptr(cam.get_position()));
 		// render the mesh
 		renderer::render(m);
 		}
+	if (listofeffects["grey_eff"] == 1)
+	{
+		redscale();
+	}
+	
 
 	return true;
 }
