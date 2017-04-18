@@ -24,7 +24,7 @@ directional_light d_light;
 
 
 cubemap cube_map;
-
+      
 double cursor_x;
 double cursor_y;
 
@@ -172,8 +172,18 @@ bool render() {
 	mat4 M = skybox_mesh.get_transform().get_transform_matrix();
 	auto V = cam.get_view();
 	auto P = cam.get_projection();
+	
+	if (cams == true)
+	{
+		V = cam.get_view();
+		P = cam.get_projection();
+	}
+	else
+	{
+		V = cam2.get_view();
+		P = cam2.get_projection();
+	}
 	auto MVP = P * V * M;
-
 	glUniformMatrix4fv(skybox_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 
 	renderer::bind(cube_map, 0);
@@ -192,16 +202,7 @@ bool render() {
 
 		//M = mat4(1.0f);
 		M = m.get_transform().get_transform_matrix();
-		if (cams == true)
-		{
-			V = cam.get_view();
-			P = cam.get_projection();
-		}
-		else
-		{
-			V = cam2.get_view();
-			P = cam2.get_projection();
-		}
+		
 		MVP = P * V * M;
 		// set MVP uniform
 		glUniformMatrix4fv(point_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
