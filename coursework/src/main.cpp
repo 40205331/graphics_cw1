@@ -77,6 +77,11 @@ bool load_content() {
 	cam2.set_target(vec3(10.0f, 10.0f, 10.0f));
 	cam2.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
+	// geometry
+	//meshes["pyramid"] = mesh(geometry_builder::create_pyramid());
+	//meshes["pyramid"].get_transform().translate(vec3(0.0f, 0.0f, 0.5f));
+	//meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
+	//textures["pyramid"] = texture("textures/alduin.jpg");
 
 
 	//Models:
@@ -85,10 +90,18 @@ bool load_content() {
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
 	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
-	
+	meshes["pyramid"] = mesh(geometry("models/pyramid.obj"));
+	meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
+	meshes["pyramid"].get_transform().translate(vec3(-100.0f, 0.0f, 0.0f));
+	meshes["eye"] = mesh(geometry("models/eyeball.obj"));
+	meshes["eye"].get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
+	meshes["eye"].get_transform().translate(vec3(-100.0f, 100.0f, 0.0f));
+	meshes["eye"].get_transform().rotate(vec3(0.0f, -half_pi<float>(), 0.0f));
 	//Textures:
 	textures["plane"] = texture("textures/check_1.png");
 	textures["alduin"] = texture("textures/alduin.jpg");
+	textures["pyramid"] = texture("textures/pyramid.jpg");
+	textures["eye"] = texture("textures/eye2.jpg");
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
@@ -179,20 +192,21 @@ bool update(float delta_time) {
 	}
 
 	// activate wireframe
-	// turn wireframe on 
+	// set F toturn wireframe on 
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_F)) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	//turn wire frame off
+	//set J turn wire frame off
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_J)) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-
+	// activate greyscale
+	// set G to turn greyscale off
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_G)) {
 		listofeffects["grey_eff"] = 0;
 	}
-	//turn wire frame off
+	// set T to turn wireframe on
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_T)) {
 		listofeffects["grey_eff"] = 1;
 	}
