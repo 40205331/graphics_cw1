@@ -93,15 +93,15 @@ bool load_content() {
 	meshes["pyramid"] = mesh(geometry("models/pyramid.obj"));
 	meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
 	meshes["pyramid"].get_transform().translate(vec3(-100.0f, 0.0f, 0.0f));
-	meshes["eye"] = mesh(geometry("models/eyeball.obj"));
-	meshes["eye"].get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
-	meshes["eye"].get_transform().translate(vec3(-100.0f, 100.0f, 0.0f));
-	meshes["eye"].get_transform().rotate(vec3(0.0f, -half_pi<float>(), 0.0f));
+	meshes["eye"] = mesh(geometry("models/eye.obj"));
+	meshes["eye"].get_transform().scale = vec3(0.25f, 0.25f, 0.25f);
+	meshes["eye"].get_transform().translate(vec3(-100.0f, 90.0f, 0.0f));
+	meshes["eye"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
 	//Textures:
 	textures["plane"] = texture("textures/check_1.png");
 	textures["alduin"] = texture("textures/alduin.jpg");
 	textures["pyramid"] = texture("textures/pyramid.jpg");
-	textures["eye"] = texture("textures/eye2.jpg");
+	textures["eye"] = texture("textures/eye-texture.jpg");
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
