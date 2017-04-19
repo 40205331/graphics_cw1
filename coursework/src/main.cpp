@@ -17,6 +17,7 @@ target_camera cam2;
 map<string, mesh> meshes;
 map<string, texture> textures;
 bool cams = true;
+bool rise;
 point_light p_light;
 static float light_off;
 static float light_on;
@@ -63,6 +64,7 @@ bool load_content() {
 	grey_eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
 	grey_eff.add_shader("shaders/greyscale.frag", GL_FRAGMENT_SHADER);
 	grey_eff.build();
+
 	// Load point light
 	p_light.set_position(vec3(20.0f, 10.0f, 0.0f));
 	p_light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -77,15 +79,9 @@ bool load_content() {
 	cam2.set_target(vec3(10.0f, 10.0f, 10.0f));
 	cam2.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
-	// geometry
-	//meshes["pyramid"] = mesh(geometry_builder::create_pyramid());
-	//meshes["pyramid"].get_transform().translate(vec3(0.0f, 0.0f, 0.5f));
-	//meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
-	//textures["pyramid"] = texture("textures/alduin.jpg");
-
 
 	//Models:
-	meshes["plane"] = mesh(geometry_builder::create_plane(50.0, 50.0));
+	meshes["plane"] = mesh(geometry_builder::create_plane(100.0, 100.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
@@ -97,8 +93,9 @@ bool load_content() {
 	meshes["eye"].get_transform().scale = vec3(0.25f, 0.25f, 0.25f);
 	meshes["eye"].get_transform().translate(vec3(-100.0f, 90.0f, 0.0f));
 	meshes["eye"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
+
 	//Textures:
-	textures["plane"] = texture("textures/check_1.png");
+	textures["plane"] = texture("textures/lava.jpg");
 	textures["alduin"] = texture("textures/alduin.jpg");
 	textures["pyramid"] = texture("textures/pyramid.jpg");
 	textures["eye"] = texture("textures/eye-texture.jpg");
@@ -108,6 +105,9 @@ bool load_content() {
 	cam.set_target(vec3(0.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 	return true;
+
+	// bools for model movement
+	rise = true;
 }
 
 void redscale()
@@ -130,6 +130,7 @@ void redscale()
 
 
 bool update(float delta_time) {
+	cout << 1.0 / delta_time << endl;
 	// The ratio of pixels to rotation - remember the FOV
 	static double ratio_width = quarter_pi<float>() / static_cast<float>(renderer::get_screen_width());
 	static double ratio_height =
@@ -211,6 +212,27 @@ bool update(float delta_time) {
 		listofeffects["grey_eff"] = 1;
 	}
 
+	// make the dragon model take off
+	if ((rise) && (meshes["alduin"].get_transform().position.y <= 10.0))
+	{
+		meshes["alduin"].get_transform().position.y += 0.1;
+	}
+	if ((!rise) && (meshes["alduin"].get_transform().position.y >= 0.0))
+	{
+		meshes["alduin"].get_transform().position.y -= 0.1;
+	}
+	if (meshes["alduin"].get_transform().position.y >= 10.0)
+	{
+		rise = false;
+		meshes["alduin"].get_transform().position.y -= 0.1;
+	}
+	if (meshes["alduin"].get_transform().position.y <= 0.0)
+	{
+		rise = true;
+		meshes["alduin"].get_transform().position.y += 0.1;
+	}
+
+	meshes["eye"].get_transform().rotate(vec3(0.0f, half_pi<float>()/50.0f, 0.0f));
 	// Update the camera
 	cam.update(delta_time);
 	cam2.update(delta_time);
