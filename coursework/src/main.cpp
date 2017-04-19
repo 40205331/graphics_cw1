@@ -9,7 +9,7 @@ using namespace glm;
 effect eff;
 effect skybox_eff;
 effect point_eff;
-
+effect mask_eff;
 effect grey_eff;
 mesh skybox_mesh;
 free_camera cam;
@@ -23,6 +23,7 @@ static float light_off;
 static float light_on;
 frame_buffer frame;
 texture tex;
+texture mask;
 geometry screen_quad;
 
 map < string, int > listofeffects;
@@ -65,6 +66,11 @@ bool load_content() {
 	grey_eff.add_shader("shaders/greyscale.frag", GL_FRAGMENT_SHADER);
 	grey_eff.build();
 
+	// masking shaders
+	mask_eff.add_shader("shaders/pshader.vert", GL_VERTEX_SHADER);
+	mask_eff.add_shader("shaders/mask.frag", GL_FRAGMENT_SHADER);
+	mask_eff.build();
+
 	// Load point light
 	p_light.set_position(vec3(20.0f, 10.0f, 0.0f));
 	p_light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -99,6 +105,7 @@ bool load_content() {
 	textures["alduin"] = texture("textures/alduin.jpg");
 	textures["pyramid"] = texture("textures/pyramid.jpg");
 	textures["eye"] = texture("textures/eye-texture.jpg");
+	mask = texture("textures/mask.jpg");
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
@@ -108,6 +115,25 @@ bool load_content() {
 
 	// bools for model movement
 	rise = true;
+}
+
+void maskeffect()
+{
+	renderer::set_render_target();
+	//bind the masking effect
+	renderer::bind(mask_eff);
+	// MVP is identity matrix
+	auto MVP = mat4(1.0f);
+	// set MVP matrix uniform
+	glUniformMatrix4fv(mask_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+	// bind texture to frame buffer
+	renderer::bind(frame.get_frame(), 0);
+	//bind mask to alpha map
+	glUniform1i(mask_eff.get_uniform_location("tex"), 0);
+	renderer::bind(mask, 1);
+	glUniform1i(mask_eff.get_uniform_location("alpha_map"), 1);
+	// render screen quad
+	renderer::render(screen_quad);
 }
 
 void redscale()
@@ -212,6 +238,16 @@ bool update(float delta_time) {
 		listofeffects["grey_eff"] = 1;
 	}
 
+	// activate masking effect
+	// set M to turn greyscale off
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_M)) {
+		listofeffects["mask_eff"] = 0;
+	}
+	// set N to turn masking on
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_N)) {
+		listofeffects["mask_eff"] = 1;
+	}
+
 	// make the dragon model take off
 	if ((rise) && (meshes["alduin"].get_transform().position.y <= 10.0))
 	{
@@ -249,7 +285,15 @@ bool update(float delta_time) {
 }
 
 bool render() {
-	renderer::clear();
+	// clear frame
+	// set render target to frame buffer
+	if (listofeffects["mask_eff"] == 1)
+	{
+		renderer::set_render_target(frame);
+		//clear frame
+		renderer::clear();
+	}
+	
 
 	// Render Skybox
 	glDisable(GL_CULL_FACE);
@@ -311,7 +355,10 @@ bool render() {
 	{
 		redscale();
 	}
-	
+	if (listofeffects["mask_eff"] == 1)
+	{
+		maskeffect();
+	}
 
 	return true;
 }
