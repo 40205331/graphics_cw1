@@ -22,6 +22,6 @@ void main() {
   // - ensure alpha is 1
   colour = vec4(red, red, red, 1.0);
   colour += vec4(1.0, 0.0, 0.0, 1.0);
-  colour.a = 0.5;
+  colour.a = 1.0;
   // *********************************
 }

@@ -93,7 +93,7 @@ bool load_content() {
 	//textures["coin1"] = texture("textures/coin.jpg");
 
 	//Models:
-	meshes["plane"] = mesh(geometry_builder::create_plane(100.0, 100.0));
+	meshes["plane"] = mesh(geometry_builder::create_plane(400.0, 400.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.1f, 0.1f, 0.1f);
@@ -105,14 +105,14 @@ bool load_content() {
 	meshes["eye"].get_transform().scale = vec3(0.25f, 0.25f, 0.25f);
 	meshes["eye"].get_transform().translate(vec3(-100.0f, 90.0f, 0.0f));
 	meshes["eye"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
-	meshes["brawler"] = mesh(geometry("models/brawler_armoured.obj"));
-	meshes["brawler"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
-	meshes["brawler"].get_transform().translate(vec3(0.0f, 0.0f, 100.0f));
+	meshes["brawler"] = mesh(geometry("models/Librarian.obj"));
+	meshes["brawler"].get_transform().scale = vec3(0.2f, 0.2f, 0.2f);
+	meshes["brawler"].get_transform().translate(vec3(0.0f, 0.0f, 150.0f));
 	meshes["brawler"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f));
-	meshes["guardian"] = mesh(geometry("models/guardian.obj"));
-	meshes["guardian"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
-	meshes["guardian"].get_transform().translate(vec3(0.0f, 0.0f, -100.0f));
-	meshes["guardian"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f));
+	meshes["spider"] = mesh(geometry("models/spider.obj"));
+	meshes["spider"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
+	meshes["spider"].get_transform().translate(vec3(0.0f, 0.0f, -150.0f));
+	meshes["spider"].get_transform().rotate(vec3(0.0f, -half_pi<float>(), 0.0f));
 	          
 	//Textures:
 	textures["plane"] = texture("textures/lava.jpg");
@@ -120,8 +120,8 @@ bool load_content() {
 	textures["pyramid"] = texture("textures/pyramid.jpg");
 	textures["eye"] = texture("textures/eye-texture.jpg");
 	mask = texture("textures/mask.jpg");
-	textures["brawler"] = texture("textures/alduin.jpg");
-	textures["guardian"] = texture("textures/alduin.jpg");
+	textures["brawler"] = texture("textures/librarian.jpg");
+	textures["spider"] = texture("textures/spider.jpg");
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
@@ -154,7 +154,7 @@ void maskeffect()
 
 void redscale()
 {
-	renderer::set_render_target(frame);
+	
 	renderer::set_render_target();
 	//Bind tex effect
 	renderer::bind(grey_eff);
@@ -309,8 +309,16 @@ bool render() {
 		//clear frame
 		renderer::clear();
 	}
-	
 
+	if (listofeffects["grey_eff"] == 1)
+	{
+		renderer::clear();
+		renderer::set_render_target(frame);
+		//clear frame
+		renderer::clear(); 
+	}
+	    
+	   
 	// Render Skybox
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
