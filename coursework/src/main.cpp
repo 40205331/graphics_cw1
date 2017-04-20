@@ -85,12 +85,18 @@ bool load_content() {
 	cam2.set_target(vec3(10.0f, 10.0f, 10.0f));
 	cam2.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
+	// geometry
+	//meshes["coin1"] = mesh(geometry_builder::create_disk());
+	//meshes["coin1"].get_transform().translate(vec3(100.0f, 0.0f, 0.0f));
+	//meshes["coin1"].get_transform().scale = vec3(50.0f, 50.0f, 50.0f);
+	//meshes["coin1"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
+	//textures["coin1"] = texture("textures/coin.jpg");
 
 	//Models:
 	meshes["plane"] = mesh(geometry_builder::create_plane(100.0, 100.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
-	meshes["alduin"].get_transform().scale = vec3(0.05f, 0.05f, 0.05f);
+	meshes["alduin"].get_transform().scale = vec3(0.1f, 0.1f, 0.1f);
 	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
 	meshes["pyramid"] = mesh(geometry("models/pyramid.obj"));
 	meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
@@ -99,13 +105,23 @@ bool load_content() {
 	meshes["eye"].get_transform().scale = vec3(0.25f, 0.25f, 0.25f);
 	meshes["eye"].get_transform().translate(vec3(-100.0f, 90.0f, 0.0f));
 	meshes["eye"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
-
+	meshes["brawler"] = mesh(geometry("models/brawler_armoured.obj"));
+	meshes["brawler"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
+	meshes["brawler"].get_transform().translate(vec3(0.0f, 0.0f, 100.0f));
+	meshes["brawler"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f));
+	meshes["guardian"] = mesh(geometry("models/guardian.obj"));
+	meshes["guardian"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
+	meshes["guardian"].get_transform().translate(vec3(0.0f, 0.0f, -100.0f));
+	meshes["guardian"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f));
+	          
 	//Textures:
 	textures["plane"] = texture("textures/lava.jpg");
 	textures["alduin"] = texture("textures/alduin.jpg");
 	textures["pyramid"] = texture("textures/pyramid.jpg");
 	textures["eye"] = texture("textures/eye-texture.jpg");
 	mask = texture("textures/mask.jpg");
+	textures["brawler"] = texture("textures/alduin.jpg");
+	textures["guardian"] = texture("textures/alduin.jpg");
 
 	// Set camera properties
 	cam.set_position(vec3(0.0f, 10.0f, 10.0f));
