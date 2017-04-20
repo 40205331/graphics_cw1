@@ -38,7 +38,7 @@ bool initialise() {
 	glfwGetCursorPos(renderer::get_window(), &cursor_x, &cursor_y);
 	return true;
 }
-
+   
 bool load_content() {
 	frame = frame_buffer(renderer::get_screen_width(), renderer::get_screen_height());
 	// create screen quad
@@ -55,7 +55,7 @@ bool load_content() {
 		"textures/hell_dn.tga", "textures/hell_rt.tga", "textures/hell_lf.tga" };
 
 	cube_map = cubemap(filenames);
-
+	    
 	skybox_eff.add_shader("shaders/skybox.vert", GL_VERTEX_SHADER);
 	skybox_eff.add_shader("shaders/skybox.frag", GL_FRAGMENT_SHADER);
 	// Build Effect
