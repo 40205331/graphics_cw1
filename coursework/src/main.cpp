@@ -5,12 +5,12 @@ using namespace std;
 using namespace graphics_framework;
 using namespace glm;
 
-
+// declare effects, bools, textures etc
 effect eff;
 effect skybox_eff;
 effect point_eff;
-effect mask_eff;
-effect grey_eff;
+effect mask_eff; // N to turn on, M to turn off
+effect grey_eff; // T to turn on, G to turn off
 mesh skybox_mesh;
 free_camera cam;
 target_camera cam2;
@@ -19,8 +19,8 @@ map<string, texture> textures;
 bool cams = true;
 bool rise;
 point_light p_light;
-static float light_off;
-static float light_on;
+static float light_off; // L to turn off
+static float light_on; // O to turn on
 frame_buffer frame;
 texture tex;
 texture mask;
@@ -34,6 +34,7 @@ double cursor_x;
 double cursor_y;
 
 bool initialise() {
+	// set up cursor position for movement, hide cursor
 	glfwSetInputMode(renderer::get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(renderer::get_window(), &cursor_x, &cursor_y);
 	return true;
@@ -49,13 +50,16 @@ bool load_content() {
 	screen_quad.set_type(GL_TRIANGLE_STRIP);
 
 	//skybox:
+	// create skybox
 	skybox_mesh = mesh(geometry_builder::create_box(vec3(10.0f, 10.0f, 10.0f)));
+	// scale skybox to desired size
 	skybox_mesh.get_transform().scale = vec3(100.0f, 100.0f, 100.0f);
+	// texture skybox with chosen textures
 	array<string, 6> filenames = { "textures/hell_ft.tga", "textures/hell_bk.tga", "textures/hell_up.tga",
 		"textures/hell_dn.tga", "textures/hell_rt.tga", "textures/hell_lf.tga" };
-
 	cube_map = cubemap(filenames);
-	    
+	
+	// add in required skybox shaders
 	skybox_eff.add_shader("shaders/skybox.vert", GL_VERTEX_SHADER);
 	skybox_eff.add_shader("shaders/skybox.frag", GL_FRAGMENT_SHADER);
 	// Build Effect
@@ -64,20 +68,27 @@ bool load_content() {
 	// greyscale shaders
 	grey_eff.add_shader("shaders/simple_texture.vert", GL_VERTEX_SHADER);
 	grey_eff.add_shader("shaders/greyscale.frag", GL_FRAGMENT_SHADER);
+	// build greyscale effect
 	grey_eff.build();
 
 	// masking shaders
 	mask_eff.add_shader("shaders/pshader.vert", GL_VERTEX_SHADER);
 	mask_eff.add_shader("shaders/mask.frag", GL_FRAGMENT_SHADER);
+	// build masking effect
 	mask_eff.build();
 
 	// Load point light
+	// set light position
 	p_light.set_position(vec3(20.0f, 10.0f, 0.0f));
+	// set light colour
 	p_light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	// set light range
 	p_light.set_range(200.0f);
 
+	// add in required light shaders
 	point_eff.add_shader("shaders/point.frag", GL_FRAGMENT_SHADER);
 	point_eff.add_shader("shaders/point.vert", GL_VERTEX_SHADER);
+	// build light effect
 	point_eff.build();
 
 	// Target camera properties
@@ -85,36 +96,35 @@ bool load_content() {
 	cam2.set_target(vec3(10.0f, 10.0f, 10.0f));
 	cam2.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
-	// geometry
-	//meshes["coin1"] = mesh(geometry_builder::create_disk());
-	//meshes["coin1"].get_transform().translate(vec3(100.0f, 0.0f, 0.0f));
-	//meshes["coin1"].get_transform().scale = vec3(50.0f, 50.0f, 50.0f);
-	//meshes["coin1"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
-	//textures["coin1"] = texture("textures/coin.jpg");
-
 	//Models:
+	// create a plane and set its position
 	meshes["plane"] = mesh(geometry_builder::create_plane(400.0, 400.0));
 	meshes["plane"].get_transform().position = vec3(0.0f, 0.0f, 0.0f);
+	// add in dragon model, scale it to desired size and move it into position
 	meshes["alduin"] = mesh(geometry("models/alduin.obj"));
 	meshes["alduin"].get_transform().scale = vec3(0.1f, 0.1f, 0.1f);
 	meshes["alduin"].get_transform().translate(vec3(0.0f, 0.0f, 0.0f));
+	// add in pyramid model, scale it to desired size and move it into position
 	meshes["pyramid"] = mesh(geometry("models/pyramid.obj"));
 	meshes["pyramid"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
 	meshes["pyramid"].get_transform().translate(vec3(-100.0f, 0.0f, 0.0f));
+	// add in eyeball model, scale it to desired size, move it into position and rotate it to face the cameras starting position
 	meshes["eye"] = mesh(geometry("models/eye.obj"));
 	meshes["eye"].get_transform().scale = vec3(0.25f, 0.25f, 0.25f);
 	meshes["eye"].get_transform().translate(vec3(-100.0f, 90.0f, 0.0f));
 	meshes["eye"].get_transform().rotate(vec3(0.0f, pi<float>(), 0.0f));
+	// add in brawler model, scale it to desired size, move it into position and rotate it to face the cameras starting position
 	meshes["brawler"] = mesh(geometry("models/Librarian.obj"));
 	meshes["brawler"].get_transform().scale = vec3(0.2f, 0.2f, 0.2f);
 	meshes["brawler"].get_transform().translate(vec3(0.0f, 0.0f, 150.0f));
 	meshes["brawler"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f));
+	// add in spider model, scale it to desired size, move it into position and rotate it to face the cameras starting position
 	meshes["spider"] = mesh(geometry("models/spider.obj"));
 	meshes["spider"].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
 	meshes["spider"].get_transform().translate(vec3(0.0f, 0.0f, -150.0f));
 	meshes["spider"].get_transform().rotate(vec3(0.0f, -half_pi<float>(), 0.0f));
 	          
-	//Textures:
+	// Textures:
 	textures["plane"] = texture("textures/lava.jpg");
 	textures["alduin"] = texture("textures/alduin.jpg");
 	textures["pyramid"] = texture("textures/pyramid.jpg");
@@ -152,7 +162,7 @@ void maskeffect()
 	renderer::render(screen_quad);
 }
 
-void redscale()
+void greyscale()
 {
 	
 	renderer::set_render_target();
@@ -172,6 +182,7 @@ void redscale()
 
 
 bool update(float delta_time) {
+	// display framerate
 	cout << 1.0 / delta_time << endl;
 	// The ratio of pixels to rotation - remember the FOV
 	static double ratio_width = quarter_pi<float>() / static_cast<float>(renderer::get_screen_width());
@@ -193,6 +204,7 @@ bool update(float delta_time) {
 	delta_y = delta_y * ratio_height;
 
 	cam.rotate(delta_x, delta_y);
+
 	// Use keyboard to move the camera - WSAD
 	// set W to move forward
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
@@ -265,12 +277,16 @@ bool update(float delta_time) {
 	}
 
 	// make the dragon model take off
+	// if dragon is below position 10.0 
 	if ((rise) && (meshes["alduin"].get_transform().position.y <= 10.0))
 	{
+		// rise at a speed of 0.1
 		meshes["alduin"].get_transform().position.y += 0.1;
 	}
+	// if dragon is not rising and above position 0.0
 	if ((!rise) && (meshes["alduin"].get_transform().position.y >= 0.0))
 	{
+		// fall at a speed of 0.1
 		meshes["alduin"].get_transform().position.y -= 0.1;
 	}
 	if (meshes["alduin"].get_transform().position.y >= 10.0)
@@ -326,6 +342,7 @@ bool render() {
 
 	renderer::bind(skybox_eff);
 
+	// create skybox matrix
 	mat4 MB = skybox_mesh.get_transform().get_transform_matrix();
 	auto VB = cam.get_view();
 	auto PB = cam.get_projection();
@@ -341,6 +358,7 @@ bool render() {
 		PB = cam2.get_projection();
 	}
 	auto MBVBPB = PB * VB * MB;
+	// set MVP uniform
 	glUniformMatrix4fv(skybox_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MBVBPB));
 
 	renderer::bind(cube_map, 0);
@@ -375,12 +393,16 @@ bool render() {
 		// render the mesh
 		renderer::render(m);
 		}
+	// if greyscale is toggled on 
 	if (listofeffects["grey_eff"] == 1)
 	{
-		redscale();
+		// call greyscale effect function
+		greyscale();
 	}
+	// if mask effect is toggled on
 	if (listofeffects["mask_eff"] == 1)
 	{
+		// call mask effect function
 		maskeffect();
 	}
 
